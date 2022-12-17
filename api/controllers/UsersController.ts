@@ -1,32 +1,35 @@
 import { Op } from 'sequelize';
-import express, { Express, NextFunction, Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import UserModel from '../models/User';
 
 class UsersController {
 
-  index = async (req: Request, res: Response, next: NextFunction) => {
+  index = async (req: Request, res: Response) => {
     const params = req.query;
-    const limit: number = params.limit ? parseInt(params.limit as string) : 100;
-    const page: number = params.page ? parseInt(params.page as string) : 1;
+    const limit: number = parseInt(params.limit as string) || 100;
+    const page: number = parseInt(params.page as string) || 1;
     const offset: number = (page - 1) * limit;
-    const sort: string = params.sort ? params.sort + "" : 'id';
-    const order: string = params.order ? params.order + "" : 'ASC';
+    const sort: any = params.sort || 'id';
+    const order: any = params.order || 'ASC';
     const where: any = {};
 
     if (params.name) {
-      where.name = {
+      where.name =
+      {
         [Op.iLike]: `%${params.name}%`
       };
     }
 
     if (params.email) {
-      where.email = {
+      where.email =
+      {
         [Op.iLike]: `%${params.email}%`
       };
     }
 
     if (params.min_age) {
-      where.age = {
+      where.age =
+      {
         [Op.gte]: params.min_age
       };
     }
@@ -35,6 +38,7 @@ class UsersController {
       if (!where.age) {
         where.age = {};
       }
+
       where.age[Op.lte] = params.max_age;
     }
 
@@ -56,8 +60,9 @@ class UsersController {
       const data = await this._validateData(req.body);
       const user = await UserModel.create(data);
       res.json(user);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+    }
+    catch (error: any) {
+      res.status(400).json({ error: error.message + "" });
     }
   }
 
@@ -68,7 +73,7 @@ class UsersController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const id = parseInt(req.params.userId);
+      const id = req.params.userId;
       const data = await this._validateData(req.body, id);
       await UserModel.update(data, {
         where: {
@@ -76,8 +81,9 @@ class UsersController {
         }
       });
       res.json(await UserModel.findByPk(id));
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+    }
+    catch (error: any) {
+      res.status(400).json({ error: error.message + "" });
     }
   }
 
@@ -90,13 +96,23 @@ class UsersController {
     res.json({});
   }
 
-  _validateData = async (data: any, id?: number) => {
+  // uploadAvatar = async (req: Request, res: Response) => {
+  //   try {
+  //     res.send(req.file?.filename);
+  //   } catch (error: any) {
+  //     res.status(400).json({ error: error.message + "" });
+  //   }
+  // }
+
+  _validateData = async (data: any, id?: any) => {
     const attributes = ['name', 'age', 'sex', 'email', 'password'];
     const user: any = {};
+
     for (const attribute of attributes) {
       if (!data[attribute]) {
         throw new Error(`The attribute "${attribute}" is required.`);
       }
+
       user[attribute] = data[attribute];
     }
 
@@ -107,8 +123,9 @@ class UsersController {
     return user;
   }
 
-  _checkIfEmailExists = async (email: string, id?: number) => {
-    const where: any = {
+  _checkIfEmailExists = async (email: string, id?: string) => {
+    const where: any =
+    {
       email: email
     };
 
@@ -123,26 +140,6 @@ class UsersController {
     return count > 0;
   }
 
-  csv = async (req: Request, res: Response, next: NextFunction) => {
-    const users = await UserModel.findAll();
-    let csv: string = `name;age;sex;email
-    `;
-
-    for (let i in users) {
-      let user = users[i];
-      csv += `${user.name};${user.age};${user.sex};${user.email}
-      `;
-    }
-
-    res.header("Content-type", "text/csv");
-    res.header("Content-Disposition", "attachment; filename=usuarios.csv");
-    res.header("Pragma", "attachment; no-cache");
-    res.header("Expires", "0");
-
-    res.send(csv);
-  };
-
 }
 
-const usersController = new UsersController();
-export default usersController;
+export default new UsersController();

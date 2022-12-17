@@ -1,15 +1,14 @@
 import { DataTypes, Model } from 'sequelize';
-import db from '../db/index';
+import db from '../db';
 
 class User extends Model {
   declare id: number;
   declare name: string;
-  declare email: string;
-  declare password: string;
-  declare age: number;
+  declare age: string;
   declare sex: string;
+  declare email: string;
 
-  static async locateUser(email: string, password: string) {
+  static locateUser = async (email: string, password: string) => {
     return await User.findOne({
       where: {
         email: email,
@@ -32,11 +31,11 @@ User.init({
   },
   age: {
     type: DataTypes.INTEGER,
-    allowNull: true
+    allowNull: false
   },
   sex: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: false
   },
   email: {
     type: DataTypes.STRING,
@@ -46,10 +45,11 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false
   }
-}, {
-  sequelize: db,
-  tableName: 'users',
-  modelName: 'User'
-});
+},
+  {
+    sequelize: db,
+    tableName: 'users',
+    modelName: 'User'
+  });
 
 export default User;
